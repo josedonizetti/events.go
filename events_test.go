@@ -22,13 +22,13 @@ func TestEmitCallbackWithParameters(t *testing.T) {
   age  := 20
   flag := true
 
-  On("connection", func(param1 string, param2 int, param3 bool){
+  On("event1", func(param1 string, param2 int, param3 bool){
     name = param1
     age = param2
     flag = param3
   })
 
-  Emit("connection", "jose", 26, false)
+  Emit("event1", "jose", 26, false)
 
   if name != "jose" {
     t.Errorf("Name should be jose")
@@ -49,15 +49,15 @@ func TestAddTwoListenersForTheSameEvent(t *testing.T) {
   listener1 := true
   listener2 := true
 
-  On("event", func() {
+  On("event2", func() {
     listener1 = false
   })
 
-  AddEventListener("event", func() {
+  AddEventListener("event2", func() {
     listener2 = false
   })
 
-  Emit("event")
+  Emit("event2")
 
   if listener1 {
     t.Errorf("Listerner1 should be false")
