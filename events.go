@@ -15,6 +15,7 @@ var events = make(map[string][]event)
 
 func newEvent(name string, listener listener, once bool) event {
 
+  //TODO: verify if panic is the best thing to do here
   if len(name) == 0 {
     panic("Listener can't be nil")
   }
@@ -72,7 +73,6 @@ func AddEventListener(name string, listener listener) {
 func Once(name string, listener listener) {
   addEventListener(name, listener, true)
 }
-
 
 func addEventListener(name string, listener listener, once bool) {
   e := newEvent(name,listener,once)
