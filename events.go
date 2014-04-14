@@ -2,39 +2,34 @@ package events
 
 import "reflect"
 
-type callback interface{}
+type listener interface{}
 
 type event struct {
   name string
-  callback callback
+  listener listener
   once bool
-  called bool
+  fired bool
 }
 
 var events = make(map[string][]event)
 
-func newEvent(name string, callback callback, once bool) event {
-  return event{name, callback, once, false}
+func newEvent(name string, listener listener, once bool) event {
+  return event{name, listener, once, false}
 }
 
-func On(name string, callback callback) {
-
-  if events[name] == nil {
-    events[name] = []event{ newEvent(name,callback,false) }
-  } else {
-    events[name] = append(events[name], newEvent(name,callback,false))
-  }
+func On(name string, listener listener) {
+  addEventListener(name, listener, false)
 }
 
-func emitCallback(event *event, params []interface{}) {
-  callback := reflect.ValueOf(event.callback)
+func callListener(event *event, params []interface{}) {
+  listener := reflect.ValueOf(event.listener)
 
-  if event.once && event.called {
+  if event.once && event.fired {
     return
   }
 
   if length := len(params); length == 0 {
-      callback.Call([]reflect.Value{})
+      listener.Call([]reflect.Value{})
   } else {
     values := make([]reflect.Value, len(params))
 
@@ -44,11 +39,10 @@ func emitCallback(event *event, params []interface{}) {
 
     //before executing the callback I need
     //to very the arity, and return an error
-    callback.Call(values)
+    listener.Call(values)
   }
 
-  event.called = true
-
+  event.fired = true
 }
 
 func Emit(name string, params ...interface{}) {
@@ -57,19 +51,26 @@ func Emit(name string, params ...interface{}) {
     events := events[name]
 
     for i := 0; i < len(events); i++ {
-      emitCallback(&events[i], params)
+      callListener(&events[i], params)
     }
   }
 }
 
-func AddEventListener(name string, callback callback) {
-  On(name, callback)
+func AddEventListener(name string, listener listener) {
+  addEventListener(name, listener, false)
 }
 
-func Once(name string, callback callback) {
+func Once(name string, listener listener) {
+  addEventListener(name, listener, true)
+}
+
+
+func addEventListener(name string, listener listener, once bool) {
+  e := newEvent(name,listener,once)
+
   if events[name] == nil {
-    events[name] = []event{ newEvent(name,callback,true) }
+    events[name] = []event{e}
   } else {
-    events[name] = append(events[name], newEvent(name,callback,true))
+    events[name] = append(events[name], e)
   }
 }
