@@ -1,10 +1,6 @@
 package events
 
-import (
-  "reflect"
-  "fmt"
-  //"unsafe"
-)
+import "reflect"
 
 type callback interface{}
 
@@ -17,13 +13,16 @@ type event struct {
 
 var events = make(map[string][]event)
 
+func newEvent(name string, callback callback, once bool) event {
+  return event{name, callback, once, false}
+}
+
 func On(name string, callback callback) {
 
   if events[name] == nil {
-    e := event{name,callback,false,false}
-    events[name] = []event{e}
+    events[name] = []event{ newEvent(name,callback,false) }
   } else {
-    events[name] = append(events[name], event{name,callback,false,false})
+    events[name] = append(events[name], newEvent(name,callback,false))
   }
 }
 
@@ -45,7 +44,6 @@ func emitCallback(event *event, params []interface{}) {
 
     //before executing the callback I need
     //to very the arity, and return an error
-    fmt.Println("")
     callback.Call(values)
   }
 
@@ -70,10 +68,8 @@ func AddEventListener(name string, callback callback) {
 
 func Once(name string, callback callback) {
   if events[name] == nil {
-    e := event{name,callback,true,false}
-    events[name] = []event{e}
+    events[name] = []event{ newEvent(name,callback,true) }
   } else {
-    e := event{name,callback,true,false}
-    events[name] = append(events[name], e)
+    events[name] = append(events[name], newEvent(name,callback,true))
   }
 }
