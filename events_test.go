@@ -67,3 +67,19 @@ func TestAddTwoListenersForTheSameEvent(t *testing.T) {
     t.Errorf("Listerner2 should be false")
   }
 }
+
+
+func TestEmitCallbackOnlyOnce(t *testing.T) {
+  count := 0
+
+  Once("once", func() {
+    count++
+  })
+
+  Emit("once")
+  Emit("once")
+
+  if count != 1 {
+    t.Error("Count should  be 1")
+  }
+}
