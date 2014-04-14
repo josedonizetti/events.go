@@ -14,6 +14,15 @@ type event struct {
 var events = make(map[string][]event)
 
 func newEvent(name string, listener listener, once bool) event {
+
+  if len(name) == 0 {
+    panic("Listener can't be nil")
+  }
+
+  if listener == nil {
+    panic("Listener can't be nil")
+  }
+
   return event{name, listener, once, false}
 }
 
