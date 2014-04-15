@@ -83,3 +83,87 @@ func TestEmitCallbackOnlyOnce(t *testing.T) {
     t.Error("Count should  be 1")
   }
 }
+
+func TestRemoveEventWithOneListener(t *testing.T) {
+  count := 0
+
+  event := On("testRemoveListener1", func() {
+      count++
+  })
+
+  Emit("testRemoveListener1")
+  RemoveEventListener(event)
+  Emit("testRemoveListener1")
+
+  if count != 1 {
+    t.Error("Count should be 1")
+  }
+}
+
+
+func TestRemoveEventWithTwoListener(t *testing.T) {
+  count := 0
+
+  event1 := On("testRemoveListener2", func() {
+      count++
+  })
+
+  count2 := 0
+
+  On("testRemoveListener3", func() {
+      count2++
+  })
+
+  Emit("testRemoveListener2")
+  Emit("testRemoveListener3")
+
+  RemoveEventListener(event1)
+
+  Emit("testRemoveListener2")
+  Emit("testRemoveListener3")
+
+  if count != 1 {
+    t.Error("Count should be 1")
+  }
+
+  if count2 != 2 {
+    t.Error("Count2 should be 2")
+  }
+}
+
+
+func TestRemoveEventWithThreeListener(t *testing.T) {
+  count := 0
+
+  On("testRemoveListener4", func() {
+      count++
+  })
+
+  count2 := 0
+
+  event5 := On("testRemoveListener5", func() {
+      count2++
+  })
+
+  On("testRemoveListener6", func() {
+      count++
+  })
+
+  Emit("testRemoveListener4")
+  Emit("testRemoveListener5")
+  Emit("testRemoveListener6")
+
+  RemoveEventListener(event5)
+
+  Emit("testRemoveListener4")
+  Emit("testRemoveListener5")
+  Emit("testRemoveListener6")
+
+  if count != 4 {
+    t.Error("Count should be 4")
+  }
+
+  if count2 != 1 {
+    t.Error("Count2 should be 1")
+  }
+}
