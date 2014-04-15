@@ -6,65 +6,61 @@ import "testing"
 func TestEmitSimpleCallback(t *testing.T) {
   var emitted bool
 
-  On("connection", func() {
-      emitted = true
-  })
-
-  Emit("connection")
+  eventEmitter := NewEventEmitter()
+  listener := func() { emitted = true }
+  eventEmitter.On("connection", listener)
+  eventEmitter.Emit("connection")
 
   if !emitted {
-    t.Errorf("Emitted should be true")
+    t.Errorf("Emitted should be true but was %t", emitted)
   }
 }
 
 func TestEmitCallbackWithParameters(t *testing.T) {
+
+  eventEmitter := NewEventEmitter()
+
   name := "dayane"
   age  := 20
   flag := true
 
-  On("event1", func(param1 string, param2 int, param3 bool){
+  listener := func(param1 string, param2 int, param3 bool){
     name = param1
     age = param2
     flag = param3
-  })
+  }
 
-  Emit("event1", "jose", 26, false)
+  eventEmitter.On("event", listener)
+  eventEmitter.Send("event", "jose", 26, false)
 
   if name != "jose" {
-    t.Errorf("Name should be jose")
+    t.Errorf("Name should be jose but was %s", name)
   }
 
   if age != 26 {
-    t.Errorf("Age should be 26")
+    t.Errorf("Age should be 26b but was %d", age)
   }
 
   if flag {
-    t.Errorf("Flag should be false")
+    t.Errorf("Flag should be false but was %t", flag)
   }
 }
 
 
 func TestAddTwoListenersForTheSameEvent(t *testing.T) {
 
-  listener1 := true
-  listener2 := true
+  eventEmitter := NewEventEmitter()
 
-  On("event2", func() {
-    listener1 = false
-  })
+  count := 0
+  listener := func() { count++ }
 
-  AddEventListener("event2", func() {
-    listener2 = false
-  })
+  eventEmitter.AddEventListener("event", listener)
+  eventEmitter.AddEventListener("event", listener)
 
-  Emit("event2")
+  eventEmitter.Emit("event")
 
-  if listener1 {
-    t.Errorf("Listerner1 should be false")
-  }
-
-  if listener2 {
-    t.Errorf("Listerner2 should be false")
+  if count != 2 {
+    t.Errorf("Count should be 2 but was %d", count)
   }
 }
 
@@ -72,31 +68,35 @@ func TestAddTwoListenersForTheSameEvent(t *testing.T) {
 func TestEmitCallbackOnlyOnce(t *testing.T) {
   count := 0
 
-  Once("once", func() {
+  eventEmitter := NewEventEmitter()
+
+  eventEmitter.Once("once", func() {
     count++
   })
 
-  Emit("once")
-  Emit("once")
+  eventEmitter.Emit("once")
+  eventEmitter.Emit("once")
 
   if count != 1 {
-    t.Error("Count should  be 1")
+    t.Errorf("Count should  be 1 but was %d", count)
   }
 }
 
 func TestRemoveEventWithOneListener(t *testing.T) {
   count := 0
 
-  event := On("testRemoveListener1", func() {
+  eventEmitter := NewEventEmitter()
+
+  eventListener := eventEmitter.On("event", func() {
       count++
   })
 
-  Emit("testRemoveListener1")
-  RemoveEventListener(event)
-  Emit("testRemoveListener1")
+  eventEmitter.Emit("event")
+  eventEmitter.RemoveEventListener(eventListener)
+  eventEmitter.Emit("event")
 
   if count != 1 {
-    t.Error("Count should be 1")
+    t.Errorf("Count should be 1 but was %d", count)
   }
 }
 
@@ -104,30 +104,18 @@ func TestRemoveEventWithOneListener(t *testing.T) {
 func TestRemoveEventWithTwoListener(t *testing.T) {
   count := 0
 
-  event1 := On("testRemoveListener2", func() {
-      count++
-  })
+  eventEmitter := NewEventEmitter()
+  listener := func() { count++ }
 
-  count2 := 0
+  eventListener := eventEmitter.On("event", listener)
+  eventEmitter.On("event", listener)
 
-  On("testRemoveListener3", func() {
-      count2++
-  })
+  eventEmitter.Emit("event")
+  eventEmitter.Off(eventListener)
+  eventEmitter.Emit("event")
 
-  Emit("testRemoveListener2")
-  Emit("testRemoveListener3")
-
-  RemoveEventListener(event1)
-
-  Emit("testRemoveListener2")
-  Emit("testRemoveListener3")
-
-  if count != 1 {
-    t.Error("Count should be 1")
-  }
-
-  if count2 != 2 {
-    t.Error("Count2 should be 2")
+  if count != 3 {
+    t.Errorf("Count should be 3 but was %d", count)
   }
 }
 
@@ -135,35 +123,19 @@ func TestRemoveEventWithTwoListener(t *testing.T) {
 func TestRemoveEventWithThreeListener(t *testing.T) {
   count := 0
 
-  On("testRemoveListener4", func() {
-      count++
-  })
+  eventEmitter := NewEventEmitter()
+  listener := func() { count++ }
 
-  count2 := 0
+  eventEmitter.AddEventListener("event", listener)
+  eventListener := eventEmitter.AddEventListener("event", listener)
+  eventEmitter.AddEventListener("event", listener)
 
-  event5 := On("testRemoveListener5", func() {
-      count2++
-  })
+  eventEmitter.Emit("event")
+  eventEmitter.RemoveEventListener(eventListener)
+  eventEmitter.Emit("event")
 
-  On("testRemoveListener6", func() {
-      count++
-  })
 
-  Emit("testRemoveListener4")
-  Emit("testRemoveListener5")
-  Emit("testRemoveListener6")
-
-  RemoveEventListener(event5)
-
-  Emit("testRemoveListener4")
-  Emit("testRemoveListener5")
-  Emit("testRemoveListener6")
-
-  if count != 4 {
-    t.Error("Count should be 4")
-  }
-
-  if count2 != 1 {
-    t.Error("Count2 should be 1")
+  if count != 5 {
+    t.Errorf("Count should be 5 but was %d", count)
   }
 }

@@ -1,11 +1,10 @@
 package events
 
 import "reflect"
-import "fmt"
 
 type listener interface{}
 
-type Event struct {
+type EventListener struct {
   id   int
   name string
   listener listener
@@ -13,12 +12,20 @@ type Event struct {
   fired bool
 }
 
-var events = make(map[string][]Event)
-var eventId = 0
+type EventEmitter struct {
+  events map[string][]EventListener
+  eventId int
+}
 
-func newEvent(name string, listener listener, once bool) Event {
+func NewEventEmitter() EventEmitter {
+  events := make(map[string][]EventListener)
+  return EventEmitter{events, 0}
+}
+
+func newEventListener(emitter *EventEmitter, name string, listener listener, once bool) EventListener {
 
   //TODO: verify if panic is the best thing to do here
+  //TODO: test name kind is string
   if len(name) == 0 {
     panic("Listener can't be nil")
   }
@@ -27,18 +34,58 @@ func newEvent(name string, listener listener, once bool) Event {
     panic("Listener can't be nil")
   }
 
-  eventId += 1
-  return Event{eventId, name, listener, once, false}
+  //TODO: test if listener kind is func
+
+  emitter.eventId += 1
+  return EventListener{emitter.eventId, name, listener, once, false}
 }
 
-func On(name string, listener listener) Event {
-  return addEventListener(name, listener, false)
+func (emitter *EventEmitter) On(name string, listener listener) EventListener {
+  return emitter.addEventListener(name, listener, false)
 }
 
-func callListener(event *Event, params []interface{}) {
-  listener := reflect.ValueOf(event.listener)
+func (emitter *EventEmitter) Off(eventListener EventListener) {
+  emitter.RemoveEventListener(eventListener)
+}
 
-  if event.once && event.fired {
+func (emitter *EventEmitter) Once(name string, listener listener) EventListener {
+  return emitter.addEventListener(name, listener, true)
+}
+
+func (emitter *EventEmitter) AddEventListener(name string, listener listener) EventListener {
+  return emitter.addEventListener(name, listener, false)
+}
+
+func (emitter *EventEmitter) addEventListener(name string, listener listener, once bool) EventListener {
+  e := newEventListener(emitter, name, listener, once)
+
+  if emitter.events[name] == nil {
+    emitter.events[name] = []EventListener{e}
+  } else {
+    emitter.events[name] = append(emitter.events[name], e)
+  }
+
+  return e
+}
+
+func (emitter *EventEmitter) RemoveEventListener(eventListener EventListener) {
+  slice := emitter.events[eventListener.name]
+
+  for i := 0; i < len(slice); i++ {
+    if slice[i].id == eventListener.id {
+      if len(slice) == 1 {
+          emitter.events[eventListener.name] = []EventListener{}
+      } else {
+          emitter.events[eventListener.name] = append(slice[0:i], slice[i+1:len(slice)]...)
+      }
+    }
+  }
+}
+
+func (emitter *EventEmitter) callListener(eventListener *EventListener, params []interface{}) {
+  listener := reflect.ValueOf(eventListener.listener)
+
+  if eventListener.once && eventListener.fired {
     return
   }
 
@@ -56,52 +103,20 @@ func callListener(event *Event, params []interface{}) {
     listener.Call(values)
   }
 
-  event.fired = true
+  eventListener.fired = true
 }
 
-func Emit(name string, params ...interface{}) {
-  if events[name] != nil {
+func (emitter *EventEmitter) Emit(name string, params ...interface{}) {
+  if emitter.events[name] != nil {
 
-    events := events[name]
+    events := emitter.events[name]
 
     for i := 0; i < len(events); i++ {
-      callListener(&events[i], params)
+      emitter.callListener(&events[i], params)
     }
   }
 }
 
-func AddEventListener(name string, listener listener) Event {
-  return addEventListener(name, listener, false)
-}
-
-func Once(name string, listener listener) Event {
-  return addEventListener(name, listener, true)
-}
-
-func addEventListener(name string, listener listener, once bool) Event {
-  e := newEvent(name,listener,once)
-
-  if events[name] == nil {
-    events[name] = []Event{e}
-  } else {
-    events[name] = append(events[name], e)
-  }
-
-  return e
-}
-
-
-func RemoveEventListener(event Event) {
-  slice := events[event.name]
-
-  for i := 0; i < len(slice); i++ {
-    if slice[i].id == event.id {
-      if len(slice) == 1 {
-          events[event.name] = []Event{}
-      } else {
-          fmt.Println(i)
-          events[event.name] = append(slice[0:i], slice[i+1:len(slice)]...)
-      }
-    }
-  }
+func (emitter *EventEmitter) Send(name string, params ...interface{}) {
+  emitter.Emit(name, params...)
 }

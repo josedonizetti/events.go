@@ -3,7 +3,6 @@ listeners()
 listernersCount()
 removeAllListeners()
 async
-Make events no global, but object based
 validate arguments number
 emit newListener
 emit removeListener
