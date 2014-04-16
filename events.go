@@ -139,3 +139,12 @@ func (emitter *EventEmitter) listenersCount(name string) int {
 
   return 0
 }
+
+func (emitter *EventEmitter) RemoveAllEventListeners(name string) {
+
+  if len(name) == 0 {
+    panic("Event name can't be nil")
+  }
+
+  emitter.events[name] = []EventListener{}
+}

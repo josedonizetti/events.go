@@ -166,3 +166,22 @@ func TestListenerCount(t *testing.T) {
     t.Errorf("Listeners count should be 0 for event")
   }
 }
+
+
+func TestRemoveAllEventListeners(t *testing.T) {
+
+  listener := func() { }
+
+  eventEmitter := NewEventEmitter()
+
+  eventEmitter.AddEventListener("event", listener)
+  eventEmitter.AddEventListener("event", listener)
+  eventEmitter.AddEventListener("event", listener)
+
+  eventEmitter.RemoveAllEventListeners("event")
+
+  if (eventEmitter.listenersCount("event") != 0) {
+    t.Errorf("Listeners count should be 0 for event")
+  }
+}
+
