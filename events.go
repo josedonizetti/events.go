@@ -19,6 +19,7 @@ type EventListener struct {
 type EventEmitter struct {
   events map[string][]EventListener
   eventId int
+  defaultMaxListeners int
 }
 
 func newEventListener(emitter *EventEmitter, name string, listener listener, once bool) EventListener {
@@ -45,7 +46,7 @@ func (listener *EventListener) isNil() bool {
 
 func NewEventEmitter() EventEmitter {
   events := make(map[string][]EventListener)
-  return EventEmitter{events, 0}
+  return EventEmitter{events, 0, 10}
 }
 
 func (emitter *EventEmitter) On(name string, listener listener) EventListener {
@@ -65,6 +66,12 @@ func (emitter *EventEmitter) AddEventListener(name string, listener listener) Ev
 }
 
 func (emitter *EventEmitter) addEventListener(name string, listener listener, once bool) EventListener {
+
+  if(emitter.events[name] == emitter.defaultMaxListeners) {
+    //TODO: change it to be an error
+    panic("Max limit of listener for the event %s was reached", name)
+  }
+
   e := newEventListener(emitter, name, listener, once)
 
   if emitter.events[name] == nil {
@@ -157,4 +164,16 @@ func (emitter *EventEmitter) RemoveAllEventListeners(name string) {
   }
 
   emitter.events[name] = []EventListener{}
+}
+
+func (emitter *EventEmitter) setMaxListeners(maxListeners int) {
+  if maxListeners == nil {
+    panic("MaxListener can't be nil")
+  }
+
+  if maxListeners < 1 {
+    panic("MaxListener must be a positive number")
+  }
+
+  emitter.defaultMaxListeners = maxListeners
 }
