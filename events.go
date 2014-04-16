@@ -21,11 +21,6 @@ type EventEmitter struct {
   eventId int
 }
 
-func NewEventEmitter() EventEmitter {
-  events := make(map[string][]EventListener)
-  return EventEmitter{events, 0}
-}
-
 func newEventListener(emitter *EventEmitter, name string, listener listener, once bool) EventListener {
 
   if len(name) == 0 {
@@ -42,6 +37,15 @@ func newEventListener(emitter *EventEmitter, name string, listener listener, onc
 
   emitter.eventId += 1
   return EventListener{emitter.eventId, name, listener, once, false}
+}
+
+func (listener *EventListener) isNil() bool {
+  return listener == nil
+}
+
+func NewEventEmitter() EventEmitter {
+  events := make(map[string][]EventListener)
+  return EventEmitter{events, 0}
 }
 
 func (emitter *EventEmitter) On(name string, listener listener) EventListener {
@@ -125,8 +129,4 @@ func (emitter *EventEmitter) Emit(name string, params ...interface{}) {
 
 func (emitter *EventEmitter) Send(name string, params ...interface{}) {
   emitter.Emit(name, params...)
-}
-
-func (listener *EventListener) isNil() bool {
-  return listener == nil
 }
