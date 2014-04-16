@@ -88,7 +88,7 @@ func TestRemoveEventWithOneListener(t *testing.T) {
 
   eventEmitter := NewEventEmitter()
 
-  eventListener := eventEmitter.On("event", func() {
+  eventListener, _ := eventEmitter.On("event", func() {
       count++
   })
 
@@ -108,7 +108,7 @@ func TestRemoveEventWithTwoListener(t *testing.T) {
   eventEmitter := NewEventEmitter()
   listener := func() { count++ }
 
-  eventListener := eventEmitter.On("event", listener)
+  eventListener, _ := eventEmitter.On("event", listener)
   eventEmitter.On("event", listener)
 
   eventEmitter.Emit("event")
@@ -128,7 +128,7 @@ func TestRemoveEventWithThreeListener(t *testing.T) {
   listener := func() { count++ }
 
   eventEmitter.AddEventListener("event", listener)
-  eventListener := eventEmitter.AddEventListener("event", listener)
+  eventListener, _ := eventEmitter.AddEventListener("event", listener)
   eventEmitter.AddEventListener("event", listener)
 
   eventEmitter.Emit("event")
@@ -201,15 +201,15 @@ func TestEmmitNewEventListener(t *testing.T) {
 }
 
 
-func TestEmmitRemoveEventListener(t *testing.T) {
+func TestEmitRemoveEventListener(t *testing.T) {
     count := 0
 
     removeEventListener := func(name string) { count++ }
 
     eventEmitter := NewEventEmitter()
 
-    removeListener := eventEmitter.AddEventListener("removeEventListener", removeEventListener)
-    eventListener := eventEmitter.AddEventListener("event", func(){})
+    removeListener, _ := eventEmitter.AddEventListener("removeEventListener", removeEventListener)
+    eventListener, _ := eventEmitter.AddEventListener("event", func(){})
 
     eventEmitter.RemoveEventListener(eventListener)
     eventEmitter.RemoveEventListener(removeListener)
@@ -217,4 +217,23 @@ func TestEmmitRemoveEventListener(t *testing.T) {
     if (count != 1) {
       t.Errorf("Listeners count should be 1 but was %d", count)
     }
+}
+
+
+func TestMaxListeners(t *testing.T) {
+
+  listener := func() { }
+
+  eventEmitter := NewEventEmitter()
+  eventEmitter.setMaxListeners(3)
+
+  eventEmitter.AddEventListener("event", listener)
+  eventEmitter.AddEventListener("event", listener)
+  eventEmitter.AddEventListener("event", listener)
+  _, err := eventEmitter.AddEventListener("event", listener)
+
+  if err == nil {
+    t.Errorf("Error should not be nil")
+  }
+
 }

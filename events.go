@@ -1,6 +1,9 @@
 package events
 
-import "reflect"
+import (
+  "reflect"
+  "fmt"
+)
 
 type listener interface{}
 
@@ -17,12 +20,12 @@ type EventListener struct {
 }
 
 type EventEmitter struct {
-  events map[string][]EventListener
+  events map[string][]*EventListener
   eventId int
   defaultMaxListeners int
 }
 
-func newEventListener(emitter *EventEmitter, name string, listener listener, once bool) EventListener {
+func newEventListener(emitter *EventEmitter, name string, listener listener, once bool) *EventListener {
 
   if len(name) == 0 {
     panic("Event name can't be nil")
@@ -37,45 +40,44 @@ func newEventListener(emitter *EventEmitter, name string, listener listener, onc
   }
 
   emitter.eventId += 1
-  return EventListener{emitter.eventId, name, listener, once, false}
+  return &EventListener{emitter.eventId, name, listener, once, false}
 }
 
 func (listener *EventListener) isNil() bool {
   return listener == nil
 }
 
-func NewEventEmitter() EventEmitter {
-  events := make(map[string][]EventListener)
-  return EventEmitter{events, 0, 10}
+func NewEventEmitter() *EventEmitter {
+  events := make(map[string][]*EventListener)
+  return &EventEmitter{events, 0, 10}
 }
 
-func (emitter *EventEmitter) On(name string, listener listener) EventListener {
+func (emitter *EventEmitter) On(name string, listener listener) (*EventListener, error) {
   return emitter.addEventListener(name, listener, false)
 }
 
-func (emitter *EventEmitter) Off(eventListener EventListener) {
+func (emitter *EventEmitter) Off(eventListener *EventListener) {
   emitter.RemoveEventListener(eventListener)
 }
 
-func (emitter *EventEmitter) Once(name string, listener listener) EventListener {
+func (emitter *EventEmitter) Once(name string, listener listener) (*EventListener, error) {
   return emitter.addEventListener(name, listener, true)
 }
 
-func (emitter *EventEmitter) AddEventListener(name string, listener listener) EventListener {
+func (emitter *EventEmitter) AddEventListener(name string, listener listener) (*EventListener, error) {
   return emitter.addEventListener(name, listener, false)
 }
 
-func (emitter *EventEmitter) addEventListener(name string, listener listener, once bool) EventListener {
+func (emitter *EventEmitter) addEventListener(name string, listener listener, once bool) (*EventListener, error) {
 
-  if(emitter.events[name] == emitter.defaultMaxListeners) {
-    //TODO: change it to be an error
-    panic("Max limit of listener for the event %s was reached", name)
+  if(len(emitter.events[name]) == emitter.defaultMaxListeners) {
+    return nil, fmt.Errorf("Max limit of listener for the event %s was reached", name)
   }
 
   e := newEventListener(emitter, name, listener, once)
 
   if emitter.events[name] == nil {
-    emitter.events[name] = []EventListener{e}
+    emitter.events[name] = []*EventListener{e}
   } else {
     emitter.events[name] = append(emitter.events[name], e)
   }
@@ -84,10 +86,10 @@ func (emitter *EventEmitter) addEventListener(name string, listener listener, on
     emitter.Emit("newEventListener", name)
   }
 
-  return e
+  return e, nil
 }
 
-func (emitter *EventEmitter) RemoveEventListener(eventListener EventListener) {
+func (emitter *EventEmitter) RemoveEventListener(eventListener *EventListener) {
   if eventListener.isNil() {
     panic("eventListener should not be nil")
   }
@@ -97,7 +99,7 @@ func (emitter *EventEmitter) RemoveEventListener(eventListener EventListener) {
   for i := 0; i < len(slice); i++ {
     if slice[i].id == eventListener.id {
       if len(slice) == 1 {
-          emitter.events[eventListener.name] = []EventListener{}
+          emitter.events[eventListener.name] = []*EventListener{}
       } else {
           emitter.events[eventListener.name] = append(slice[0:i], slice[i+1:len(slice)]...)
       }
@@ -139,7 +141,7 @@ func (emitter *EventEmitter) Emit(name string, params ...interface{}) {
     events := emitter.events[name]
 
     for i := 0; i < len(events); i++ {
-      emitter.callListener(&events[i], params)
+      emitter.callListener(events[i], params)
     }
   }
 }
@@ -163,14 +165,10 @@ func (emitter *EventEmitter) RemoveAllEventListeners(name string) {
     panic("Event name can't be nil")
   }
 
-  emitter.events[name] = []EventListener{}
+  emitter.events[name] = []*EventListener{}
 }
 
 func (emitter *EventEmitter) setMaxListeners(maxListeners int) {
-  if maxListeners == nil {
-    panic("MaxListener can't be nil")
-  }
-
   if maxListeners < 1 {
     panic("MaxListener must be a positive number")
   }
