@@ -36,7 +36,9 @@ func newEventListener(emitter *EventEmitter, name string, listener listener, onc
     panic("Listener can't be nil")
   }
 
-  //TODO: test if listener kind is func
+  if reflect.TypeOf(listener).Kind() != reflect.Func {
+    panic("Listener must be a func")
+  }
 
   emitter.eventId += 1
   return EventListener{emitter.eventId, name, listener, once, false}
