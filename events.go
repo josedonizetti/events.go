@@ -73,6 +73,10 @@ func (emitter *EventEmitter) addEventListener(name string, listener listener, on
     emitter.events[name] = append(emitter.events[name], e)
   }
 
+  if (emitter.events["newEventListener"] != nil) && (name != "newEventListener") {
+    emitter.Emit("newEventListener", name)
+  }
+
   return e
 }
 

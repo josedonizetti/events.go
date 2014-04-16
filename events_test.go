@@ -185,3 +185,18 @@ func TestRemoveAllEventListeners(t *testing.T) {
   }
 }
 
+func TestEmmitNewEventListener(t *testing.T) {
+    count := 0
+
+    newEventListener := func(name string) { count++ }
+
+    eventEmitter := NewEventEmitter()
+
+    eventEmitter.AddEventListener("newEventListener", newEventListener)
+    eventEmitter.AddEventListener("event", func(){})
+
+    if (count != 1) {
+      t.Errorf("Listeners count should be 1 but was %d", count)
+    }
+}
+
