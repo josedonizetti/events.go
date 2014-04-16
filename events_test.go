@@ -140,3 +140,29 @@ func TestRemoveEventWithThreeListener(t *testing.T) {
     t.Errorf("Count should be 5 but was %d", count)
   }
 }
+
+
+func TestListenerCount(t *testing.T) {
+  listener := func() { }
+
+  eventEmitter := NewEventEmitter()
+
+  eventEmitter.AddEventListener("event", listener)
+  eventEmitter.AddEventListener("event", listener)
+  eventEmitter.AddEventListener("event", listener)
+
+  eventEmitter.AddEventListener("event1", listener)
+  eventEmitter.AddEventListener("event1", listener)
+
+  if (eventEmitter.listenersCount("event") != 3) {
+    t.Errorf("Listeners count should be 3 for event")
+  }
+
+  if (eventEmitter.listenersCount("event1") != 2) {
+    t.Errorf("Listeners count should be 2 for event")
+  }
+
+  if (eventEmitter.listenersCount("event3") != 0) {
+    t.Errorf("Listeners count should be 0 for event")
+  }
+}

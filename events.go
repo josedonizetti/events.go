@@ -130,3 +130,12 @@ func (emitter *EventEmitter) Emit(name string, params ...interface{}) {
 func (emitter *EventEmitter) Send(name string, params ...interface{}) {
   emitter.Emit(name, params...)
 }
+
+func (emitter *EventEmitter) listenersCount(name string) int {
+
+  if emitter.events[name] != nil {
+    return len(emitter.events[name])
+  }
+
+  return 0
+}
