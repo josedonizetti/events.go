@@ -28,10 +28,8 @@ func NewEventEmitter() EventEmitter {
 
 func newEventListener(emitter *EventEmitter, name string, listener listener, once bool) EventListener {
 
-  //TODO: verify if panic is the best thing to do here
-  //TODO: test name kind is string
   if len(name) == 0 {
-    panic("Listener can't be nil")
+    panic("Event name can't be nil")
   }
 
   if listener == nil {
@@ -91,14 +89,14 @@ func (emitter *EventEmitter) RemoveEventListener(eventListener EventListener) {
 }
 
 func (emitter *EventEmitter) callListener(eventListener *EventListener, params []interface{}) {
-  listener := reflect.ValueOf(eventListener.listener)
+  listenerFunc := reflect.ValueOf(eventListener.listener)
 
   if eventListener.once && eventListener.fired {
     return
   }
 
   if length := len(params); length == 0 {
-      listener.Call([]reflect.Value{})
+      listenerFunc.Call([]reflect.Value{})
   } else {
     values := make([]reflect.Value, len(params))
 
@@ -106,9 +104,7 @@ func (emitter *EventEmitter) callListener(eventListener *EventListener, params [
       values[i] = reflect.ValueOf(params[i])
     }
 
-    //before executing the callback I need
-    //to very the arity, and return an error
-    listener.Call(values)
+    listenerFunc.Call(values)
   }
 
   eventListener.fired = true
