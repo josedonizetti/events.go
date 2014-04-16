@@ -1,6 +1,7 @@
 package events
 
 import "testing"
+//import "fmt"
 
 
 func TestEmitSimpleCallback(t *testing.T) {
@@ -138,4 +139,13 @@ func TestRemoveEventWithThreeListener(t *testing.T) {
   if count != 5 {
     t.Errorf("Count should be 5 but was %d", count)
   }
+}
+
+
+func TestT(t *testing.T) {
+  eventEmitter := NewEventEmitter()
+  //listener := func(count int, t string) { fmt.Println("maneiro") }
+
+  eventEmitter.AddEventListener("event", "batata")
+  eventEmitter.Emit("event", 1)
 }

@@ -4,6 +4,10 @@ import "reflect"
 
 type listener interface{}
 
+type isNil interface {
+  isNil()
+}
+
 type EventListener struct {
   id   int
   name string
@@ -69,6 +73,10 @@ func (emitter *EventEmitter) addEventListener(name string, listener listener, on
 }
 
 func (emitter *EventEmitter) RemoveEventListener(eventListener EventListener) {
+  if eventListener.isNil() {
+    panic("eventListener should not be nil")
+  }
+
   slice := emitter.events[eventListener.name]
 
   for i := 0; i < len(slice); i++ {
@@ -119,4 +127,8 @@ func (emitter *EventEmitter) Emit(name string, params ...interface{}) {
 
 func (emitter *EventEmitter) Send(name string, params ...interface{}) {
   emitter.Emit(name, params...)
+}
+
+func (listener *EventListener) isNil() bool {
+  return listener == nil
 }

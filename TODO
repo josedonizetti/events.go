@@ -8,3 +8,12 @@ emit newListener
 emit removeListener
 better struct to store events, where is easier to remove
 better error messages
+
+
+//listenerType := reflect.TypeOf(eventListener.listener)
+
+//fmt.Println(event.name)
+//fmt.Println(listenerType.NumIn())
+//for i := 0; i < listenerType.NumIn(); i++ {
+  //fmt.Println(listenerType.In(i))
+//}
