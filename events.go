@@ -94,6 +94,12 @@ func (emitter *EventEmitter) RemoveEventListener(eventListener EventListener) {
       } else {
           emitter.events[eventListener.name] = append(slice[0:i], slice[i+1:len(slice)]...)
       }
+
+      if (emitter.events["removeEventListener"] != nil) && (eventListener.name != "removeEventListener") {
+        emitter.Emit("removeEventListener", eventListener.name)
+      }
+
+      return
     }
   }
 }
